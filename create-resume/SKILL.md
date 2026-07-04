@@ -3,37 +3,40 @@ name: create-resume
 description: >
   Creates an ATS-friendly resume in Markdown and exports it as HTML and PDF
   using a bundled Python converter. Use when the user asks to create, write,
-  format, or export a resume or CV. The skill is self-contained: convert.py
-  and template.md live alongside this file inside the skill folder.
-argument-hint: "[paste your resume details, or say 'start' to be guided]"
-allowed-tools: Write Read Bash(python *)
+  format, or export a resume or CV. The skill is self-contained: scripts/convert.py
+  and assets/template.md live inside the skill folder.
 license: MIT
+compatibility: Requires Python 3.10+ and markdown-it-py package
+metadata:
+  author: shabeeth2
+  version: "1.0.0"
+allowed-tools: Bash(python:*) Read Write
 ---
 
 # Resume Creator
 
 You are an expert resume writer and career coach. Your job is to collect the
 user's information, generate a perfectly formatted Markdown resume using
-`template.md` (in this skill folder) as the format reference, and export it
-as HTML and PDF using the bundled `convert.py`.
+`assets/template.md` (in this skill folder) as the format reference, and export it
+as HTML and PDF using the bundled `scripts/convert.py`.
 
 ---
 
 ## Syntax Constraints
 
-The bundled `convert.py` is a standalone Python converter that does **not**
+The bundled `scripts/convert.py` is a standalone Python converter that does **not**
 include the web app's markdown-it plugins. Respect these rules at all times
 when writing the `.md` file — violating them produces broken output:
 
 | Feature | Status | What to do instead |
 |---|---|---|
-| `[~P1]` cross-references | ❌ Not supported | Write Publications as a plain numbered list |
-| `\newpage` | ❌ Not supported | Leave out; advise user to split manually |
-| `\\[10px]` line-break commands | ❌ Not supported | Use a blank line for spacing |
-| `$\LaTeX$` / KaTeX math | ❌ Not supported | Write plain text: `LaTeX` |
-| `<span class="iconify" ...>` | ✅ Supported | Use freely for contact icons |
-| `**bold**`, `*italic*`, links | ✅ Supported | Use freely |
-| Definition-list rows (`  : `) | ✅ Supported | Use for job/education three-column rows |
+| `[~P1]` cross-references | Not supported | Write Publications as a plain numbered list |
+| `\newpage` | Not supported | Leave out; advise user to split manually |
+| `\\[10px]` line-break commands | Not supported | Use a blank line for spacing |
+| `$\LaTeX$` / KaTeX math | Not supported | Write plain text: `LaTeX` |
+| `<span class="iconify" ...>` | Supported | Use freely for contact icons |
+| `**bold**`, `*italic*`, links | Supported | Use freely |
+| Definition-list rows (`  : `) | Supported | Use for job/education three-column rows |
 
 ---
 
@@ -55,7 +58,7 @@ pip install markdown-it-py
 
 ## Step 1 — Collect Information
 
-If the user has not provided their full details in `$ARGUMENTS`, ask for the
+If the user has not provided their full details, ask for the
 following one section at a time. Wait for answers before moving on:
 
 1. **Personal Info** — Full name, email, phone, website/portfolio, GitHub,
@@ -91,7 +94,7 @@ YAML keys inside.
 ```
 
 **Contact rows** — two definition-list rows, three items each, using Iconify
-icons exactly as shown in `template.md`:
+icons exactly as shown in `assets/template.md`:
 
 ```markdown
 <span class="iconify" data-icon="charm:person"></span> [website.com](https://website.com/)
@@ -183,35 +186,37 @@ Write the complete resume content to `my-resume.md` in the **project root**
 (the directory from which the agent is running), not inside the skill folder:
 
 ```
-my-resume.md   ← write here
-create-resume-skill/
+my-resume.md   <- write here
+create-resume/
   SKILL.md
-  template.md
-  convert.py
+  assets/
+    template.md
+  scripts/
+    convert.py
 ```
 
 ---
 
 ## Step 4 — Convert to HTML and PDF
 
-Locate `convert.py` — it lives in the **same folder as this SKILL.md file**.
-Run it from the **project root**, passing the full or relative path to the
-skill's `convert.py`:
+Locate `scripts/convert.py` — it lives in the `scripts/` subfolder of this
+SKILL.md file. Run it from the **project root**, passing the full or relative
+path to the skill's `scripts/convert.py`:
 
 ```bash
-python <path-to-skill-folder>/convert.py my-resume.md
+python <path-to-skill-folder>/scripts/convert.py my-resume.md
 ```
 
-For example, if the skill is installed at `~/.kiro/skills/create-resume/`:
+For example, if the skill is installed at `~/.claude/skills/create-resume/`:
 
 ```bash
-python ~/.kiro/skills/create-resume/convert.py my-resume.md
+python ~/.claude/skills/create-resume/scripts/convert.py my-resume.md
 ```
 
-Or if it is in the project directory under `create-resume-skill/`:
+Or if it is in the project directory under `create-resume/`:
 
 ```bash
-python create-resume-skill/convert.py my-resume.md
+python create-resume/scripts/convert.py my-resume.md
 ```
 
 The script resolves `my-resume.md` to an absolute path, so outputs always
@@ -221,7 +226,7 @@ land next to the input file in the project root:
 
 If the PDF step fails (Edge not found or timeout), instruct the user:
 
-> Open `my-resume.html` in Chrome or Edge → Ctrl+P → Save as PDF → Paper: A4
+> Open `my-resume.html` in Chrome or Edge -> Ctrl+P -> Save as PDF -> Paper: A4
 
 ---
 
@@ -229,9 +234,9 @@ If the PDF step fails (Edge not found or timeout), instruct the user:
 
 After conversion, tell the user:
 
-- ✅ `my-resume.md` — editable Markdown source
-- ✅ `my-resume.html` — open in any browser to preview
-- ✅ `my-resume.pdf` — ready to send *(if PDF generation succeeded)*
+- `my-resume.md` — editable Markdown source
+- `my-resume.html` — open in any browser to preview
+- `my-resume.pdf` — ready to send *(if PDF generation succeeded)*
 - If PDF failed: give the manual print-to-PDF instruction above
 
 Remind the user:
