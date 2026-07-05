@@ -1,0 +1,53 @@
+{
+  "name": "create-resume",
+  "version": "1.1.0",
+  "description": "Creates ATS-friendly resumes in Markdown and exports them as HTML and PDF. Triggered when users ask to create, write, format, update, or export a resume or CV.",
+  "author": "shabeeth2",
+  "homepage": "https://github.com/shabeeth2/create-resume",
+  "license": "MIT",
+  "icon": "📄",
+  "tags": ["resume", "cv", "career", "document", "pdf", "markdown", "productivity"],
+  "entrypoint": "SKILL.md",
+  "compatibility": {
+    "platforms": ["claude-code", "opencode", "generic"],
+    "python": ">=3.10",
+    "packages": ["markdown-it-py>=3.0.0"],
+    "optional": {
+      "pdf_windows": "Microsoft Edge 112+",
+      "pdf_macos": "Google Chrome or Microsoft Edge",
+      "pdf_linux": "Google Chrome or Chromium"
+    }
+  },
+  "tools_required": ["Bash", "Read", "Write"],
+  "outputs": [
+    {
+      "file": "my-resume.md",
+      "location": "project_root",
+      "description": "Editable Markdown source"
+    },
+    {
+      "file": "my-resume.html",
+      "location": "project_root",
+      "description": "Full HTML with inline CSS and Iconify icons"
+    },
+    {
+      "file": "my-resume.pdf",
+      "location": "project_root",
+      "description": "Print-ready PDF (requires Edge or Chrome headless)"
+    }
+  ],
+  "triggers": [
+    "create a resume",
+    "write a CV",
+    "write my resume",
+    "make me a resume",
+    "help me with my resume",
+    "format my resume",
+    "update my resume",
+    "generate a resume",
+    "export my resume to PDF",
+    "resume from LinkedIn",
+    "ATS-friendly resume",
+    "job application resume"
+  ]
+}

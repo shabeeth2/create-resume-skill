@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
 """
-convert.py - Convert a markdown resume to HTML + PDF.
+convert.py - Convert a Markdown resume to HTML + PDF.
+
+Part of the create-resume agent skill.
+https://github.com/shabeeth2/create-resume
 
 Usage:
   python convert.py <resume.md>              # → resume.html + resume.pdf
   python convert.py <resume.md> --html-only  # → resume.html only
+  python convert.py --version                # → print version and exit
+  python convert.py --help                   # → print this help
 
-Requirements (already installed):
-  markdown-it-py  - Markdown parsing
-  Edge headless   - HTML → PDF (built into Windows)
+Requirements:
+  markdown-it-py  (pip install markdown-it-py)
+
+PDF engine (one of, in priority order):
+  Windows : Microsoft Edge 112+  (msedge.exe — built into Windows)
+  macOS   : Google Chrome        (homebrew: brew install --cask google-chrome)
+  Linux   : Google Chrome / Chromium (apt: chromium-browser)
 """
+
+__version__ = "1.1.0"
 
 import sys
 import re
@@ -17,7 +28,7 @@ import subprocess
 from pathlib import Path
 
 # ─── Resume CSS ───────────────────────────────────────────────────────────────
-# Matches the project's default template (site/src/utils/constants/default.ts)
+# Matches the project's default template styling
 
 RESUME_CSS = """
 @page {
@@ -135,7 +146,7 @@ def strip_frontmatter(text: str) -> str:
 
 
 def md_inline(text: str) -> str:
-    """Convert inline markdown to HTML (bold, italic, links, code, underline)."""
+    """Convert inline markdown to HTML (bold, italic, links, code)."""
     # Bold+Italic: ***text***
     text = re.sub(r"\*\*\*(.+?)\*\*\*", r"<strong><em>\1</em></strong>", text)
     # Bold: **text**
@@ -231,46 +242,103 @@ def build_full_html(body: str, title: str = "Resume") -> str:
 </html>"""
 
 
-def html_to_pdf(html_path: Path, pdf_path: Path) -> bool:
-    """Render HTML to PDF using Edge headless. Returns True on success."""
-    edge_candidates = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-    ]
-    edge = next((p for p in edge_candidates if Path(p).exists()), None)
+# ─── PDF engine detection ─────────────────────────────────────────────────────
 
-    if not edge:
-        print("  [WARN] Microsoft Edge not found on this system.")
-        print(f"  [INFO] Open '{html_path.name}' in your browser -> Ctrl+P -> Save as PDF.")
+def _find_browser() -> tuple[str | None, str]:
+    """
+    Find a headless-capable browser for PDF export.
+    Returns (path_or_None, platform_name).
+
+    Priority:
+      1. Microsoft Edge (Windows primary, also available on macOS/Linux)
+      2. Google Chrome (macOS / Linux)
+      3. Chromium (Linux)
+    """
+    import platform
+    os_name = platform.system()
+
+    candidates: list[tuple[str, str]] = []
+
+    if os_name == "Windows":
+        candidates = [
+            (r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "Edge"),
+            (r"C:\Program Files\Microsoft\Edge\Application\msedge.exe", "Edge"),
+            (r"C:\Program Files\Google\Chrome\Application\chrome.exe", "Chrome"),
+        ]
+    elif os_name == "Darwin":  # macOS
+        candidates = [
+            ("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "Chrome"),
+            ("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge", "Edge"),
+            ("/Applications/Chromium.app/Contents/MacOS/Chromium", "Chromium"),
+        ]
+    else:  # Linux and others
+        # Try PATH-based lookup for common executables
+        for name in ("google-chrome", "google-chrome-stable", "chromium-browser",
+                      "chromium", "microsoft-edge", "microsoft-edge-stable"):
+            try:
+                result = subprocess.run(
+                    ["which", name], capture_output=True, text=True, timeout=5
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    label = "Chrome" if "chrome" in name else (
+                        "Chromium" if "chromium" in name else "Edge"
+                    )
+                    candidates.append((result.stdout.strip(), label))
+            except Exception:
+                pass
+
+    for path, label in candidates:
+        if Path(path).exists():
+            return path, label
+
+    return None, ""
+
+
+def html_to_pdf(html_path: Path, pdf_path: Path) -> bool:
+    """
+    Render HTML to PDF using Edge or Chrome headless.
+    Returns True on success, False on failure.
+    """
+    browser, label = _find_browser()
+
+    if not browser:
+        print("  [WARN] No supported browser found for PDF export.")
+        print("         Supported: Microsoft Edge (Windows), Google Chrome, Chromium")
+        print(f"  [INFO] Manual fallback: open '{html_path.name}' in your browser")
+        print("         → Ctrl+P (or Cmd+P) → Save as PDF → Paper: A4")
         return False
 
     file_url = html_path.as_uri()  # e.g. file:///D:/path/to/my-resume.html
 
     cmd = [
-        edge,
-        "--headless=new",          # new headless mode (Edge 112+)
+        browser,
+        "--headless=new",                          # new headless mode (Chrome/Edge 112+)
         "--disable-gpu",
         "--no-sandbox",
         "--run-all-compositor-stages-before-draw",
-        "--virtual-time-budget=5000",   # wait up to 5 s for JS (iconify icons)
+        "--virtual-time-budget=5000",              # wait up to 5 s for Iconify JS
         f"--print-to-pdf={pdf_path}",
         file_url,
     ]
 
-    print(f"  Running Edge headless -> {pdf_path.name} ...")
+    print(f"  [*] Using {label} headless -> {pdf_path.name} ...")
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=30)
     except subprocess.TimeoutExpired:
-        print("  [WARN] Edge timed out after 30 s.")
+        print("  [WARN] Browser timed out after 30 s.")
+        print(f"  [INFO] Manual fallback: open '{html_path.name}' → Ctrl+P → Save as PDF")
+        return False
+    except FileNotFoundError:
+        print(f"  [WARN] Browser executable not found: {browser}")
         return False
     except Exception as e:
-        print(f"  [WARN] Edge error: {e}")
+        print(f"  [WARN] Browser error: {e}")
         return False
 
     if pdf_path.exists() and pdf_path.stat().st_size > 0:
         return True
 
-    # Edge sometimes outputs to the CWD — check there too
+    # Some browsers output to CWD — check there too
     cwd_pdf = Path.cwd() / pdf_path.name
     if cwd_pdf.exists() and cwd_pdf != pdf_path:
         cwd_pdf.rename(pdf_path)
@@ -278,6 +346,8 @@ def html_to_pdf(html_path: Path, pdf_path: Path) -> bool:
 
     return False
 
+
+# ─── Main convert function ────────────────────────────────────────────────────
 
 def convert(md_file: str, html_only: bool = False) -> None:
     md_path = Path(md_file).resolve()
@@ -288,7 +358,7 @@ def convert(md_file: str, html_only: bool = False) -> None:
     html_path = md_path.with_suffix(".html")
     pdf_path  = md_path.with_suffix(".pdf")
 
-    print(f"\n[*] Input  : {md_path.name}")
+    print(f"\n[*] Input  : {md_path}")
 
     # Step 1 - Markdown to HTML
     print("[1] Markdown -> HTML ...")
@@ -296,36 +366,44 @@ def convert(md_file: str, html_only: bool = False) -> None:
     body_html = md_to_html_body(md_text)
     full_html = build_full_html(body_html, title=md_path.stem.replace("-", " ").title())
     html_path.write_text(full_html, encoding="utf-8")
-    print(f"    OK: HTML saved -> {html_path}")
+    print(f"    [OK] HTML saved -> {html_path}")
 
     if html_only:
+        print()
         return
 
     # Step 2 - HTML to PDF
-    print("[2] HTML -> PDF (Edge headless) ...")
+    print("[2] HTML -> PDF (headless browser) ...")
     ok = html_to_pdf(html_path, pdf_path)
     if ok:
         size_kb = pdf_path.stat().st_size // 1024
-        print(f"    OK: PDF saved  -> {pdf_path}  ({size_kb} KB)")
+        print(f"    [OK] PDF saved  -> {pdf_path}  ({size_kb} KB)")
     else:
-        print(f"    WARN: PDF not generated. Open '{html_path.name}' in browser -> Ctrl+P -> Save as PDF")
+        print(f"    [WARN] PDF not generated.")
+        print(f"    [INFO] Open '{html_path.name}' in Chrome/Edge -> Ctrl+P -> Save as PDF (A4)")
 
     print()
 
 
-# ─── Entry point ─────────────────────────────────────────────────────────────
+# ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args or args[0] in ("-h", "--help"):
+
+    if not args or "--help" in args or "-h" in args:
         print(__doc__)
+        sys.exit(0)
+
+    if "--version" in args or "-v" in args:
+        print(f"convert.py {__version__} (create-resume skill)")
         sys.exit(0)
 
     html_only = "--html-only" in args
     md_files  = [a for a in args if not a.startswith("--")]
 
     if not md_files:
-        print("❌ Please provide a .md file path.")
+        print("[ERROR] Please provide a .md file path.")
+        print("        Usage: python convert.py <resume.md>")
         sys.exit(1)
 
     convert(md_files[0], html_only=html_only)

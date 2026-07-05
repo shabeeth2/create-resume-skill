@@ -1,0 +1,156 @@
+# AGENTS.md — create-resume Skill
+
+This file provides agent-system-level documentation for the `create-resume`
+skill. It is intended for agent runtimes and platform integrators, not for
+end users (see `README.md` for user-facing documentation).
+
+---
+
+## Skill Identity
+
+| Field | Value |
+|-------|-------|
+| Skill name | `create-resume` |
+| Version | `1.1.0` |
+| Author | `shabeeth2` |
+| License | MIT |
+| Entry point | `SKILL.md` |
+
+---
+
+## When to Invoke This Skill
+
+Invoke this skill when the user's intent matches **resume or CV creation,
+editing, formatting, or export**. Common trigger signals:
+
+### High-confidence triggers (invoke immediately)
+- "create a resume"
+- "write my CV"
+- "make me a resume"
+- "help me with my resume"
+- "generate a resume"
+- "export my resume to PDF"
+- "format my work history"
+
+### Medium-confidence triggers (confirm intent first)
+- "update my document" (clarify: is it a resume?)
+- "I need a PDF of my profile"
+- "help me apply for a job" (may or may not need resume creation)
+
+### Do NOT invoke for
+- Reviewing or critiquing an existing resume (no file output needed)
+- General career advice questions
+- Cover letter writing (not yet supported — note this to the user)
+
+---
+
+## Files This Skill Reads
+
+| File | Path (relative to skill folder) | Purpose |
+|------|----------------------------------|---------|
+| `template.md` | `assets/template.md` | Format reference for resume structure |
+| `convert.py` | `scripts/convert.py` | Markdown → HTML + PDF converter |
+| `my-resume.md` | `<project_root>/my-resume.md` | Existing resume to update (if present) |
+
+---
+
+## Files This Skill Writes
+
+| File | Path | Description |
+|------|------|-------------|
+| `my-resume.md` | `<project_root>/my-resume.md` | Markdown source of the generated resume |
+| `my-resume.html` | `<project_root>/my-resume.html` | Full HTML with inline CSS |
+| `my-resume.pdf` | `<project_root>/my-resume.pdf` | PDF (if browser headless is available) |
+
+All output files are placed in the **project root** — the directory from
+which the agent process is running. Never write inside the skill folder.
+
+---
+
+## Tools Required
+
+This skill requires the following tool permissions:
+
+| Tool | Usage |
+|------|-------|
+| `Bash(python:*)` | Running `python -c "import markdown_it"`, `pip install`, and `convert.py` |
+| `Read` | Reading `assets/template.md` and any existing `my-resume.md` |
+| `Write` | Writing `my-resume.md` to the project root |
+
+---
+
+## Dependencies
+
+### Runtime
+- **Python 3.10+** — must be on PATH as `python` or `python3`
+- **markdown-it-py ≥ 3.0** — auto-installed by the skill if missing
+
+### Optional (for PDF export)
+- **Microsoft Edge 112+** (Windows) — headless PDF via `msedge.exe`
+- **Google Chrome** (macOS / Linux) — headless PDF via `google-chrome` or `chromium`
+
+If no supported browser is found, the skill gracefully skips PDF and
+instructs the user to print-to-PDF manually from their browser.
+
+---
+
+## Execution Flow
+
+```
+User request
+    │
+    ▼
+Step 0: Check for existing my-resume.md
+    │
+    ▼
+Step 1: Verify python + markdown-it-py
+    │   (auto-install if missing)
+    ▼
+Step 2: Collect user information interactively
+    │   (one section at a time)
+    ▼
+Step 3: Generate Markdown content
+    │   (following assets/template.md format)
+    ▼
+Step 4: Write my-resume.md to project root
+    │
+    ▼
+Step 5: Run scripts/convert.py
+    │   → my-resume.html (always)
+    │   → my-resume.pdf  (if browser available)
+    ▼
+Step 6: Report output files to user
+```
+
+---
+
+## Known Limitations
+
+| Limitation | Impact | Workaround |
+|------------|--------|------------|
+| PDF requires Edge or Chrome | PDF export fails on minimal systems | User prints HTML to PDF manually |
+| Single-file output only | Always writes `my-resume.md` | User can rename the file afterwards |
+| No cover letter support | Users must request separately | Planned for v2.0 |
+| No LinkedIn scraping | Agent cannot auto-fetch LinkedIn data | User pastes their profile text |
+| Windows-only headless PDF path was primary | Now cross-platform in v1.1.0 | Chrome path auto-detected |
+| Iconify icons require internet | Icons may not render in offline PDF | Open HTML online, then print to PDF |
+
+---
+
+## Compatibility
+
+| Agent Platform | Supported | Notes |
+|----------------|-----------|-------|
+| Claude Code | ✅ Yes | Primary target |
+| OpenCode | ✅ Yes | Fully compatible |
+| Generic agents | ✅ Yes | Any agent that reads `SKILL.md` |
+| Claude.ai (web) | ⚠️ Partial | No Bash tool; Markdown output only |
+
+---
+
+## Version History
+
+| Version | Changes |
+|---------|---------|
+| 1.1.0 | Cross-platform PDF (Chrome + Edge), `--version` flag, structured error messages, `AGENTS.md`, `skill.json`, professional README |
+| 1.0.0 | Initial release — Windows/Edge PDF, basic Markdown → HTML conversion |
