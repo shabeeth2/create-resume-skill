@@ -1,17 +1,17 @@
 {
   "name": "create-resume",
-  "version": "1.1.0",
-  "description": "Creates ATS-friendly resumes in Markdown and exports them as HTML and PDF. Triggered when users ask to create, write, format, update, or export a resume or CV.",
+  "version": "1.2.0",
+  "description": "Creates ATS-friendly resumes in Markdown and exports them as Word DOCX files by default, with HTML and PDF options available on request.",
   "author": "shabeeth2",
   "homepage": "https://github.com/shabeeth2/create-resume",
   "license": "MIT",
   "icon": "📄",
-  "tags": ["resume", "cv", "career", "document", "pdf", "markdown", "productivity"],
+  "tags": ["resume", "cv", "career", "document", "docx", "word", "pdf", "markdown", "productivity"],
   "entrypoint": "SKILL.md",
   "compatibility": {
     "platforms": ["claude-code", "opencode", "generic"],
     "python": ">=3.10",
-    "packages": ["markdown-it-py>=3.0.0"],
+    "packages": ["markdown-it-py>=3.0.0", "python-docx>=1.0.0"],
     "optional": {
       "pdf_windows": "Microsoft Edge 112+",
       "pdf_macos": "Google Chrome or Microsoft Edge",
@@ -26,14 +26,19 @@
       "description": "Editable Markdown source"
     },
     {
+      "file": "my-resume.docx",
+      "location": "project_root",
+      "description": "Microsoft Word Document (Default)"
+    },
+    {
       "file": "my-resume.html",
       "location": "project_root",
-      "description": "Full HTML with inline CSS and Iconify icons"
+      "description": "Full HTML with inline CSS and Iconify icons (Optional)"
     },
     {
       "file": "my-resume.pdf",
       "location": "project_root",
-      "description": "Print-ready PDF (requires Edge or Chrome headless)"
+      "description": "Print-ready PDF (Optional, requires Edge or Chrome headless)"
     }
   ],
   "triggers": [
@@ -45,8 +50,9 @@
     "format my resume",
     "update my resume",
     "generate a resume",
-    "export my resume to PDF",
-    "resume from LinkedIn",
+    "export my resume to Word",
+    "export my resume to DOCX",
+    "resume to docx",
     "ATS-friendly resume",
     "job application resume"
   ]

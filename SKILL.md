@@ -1,20 +1,21 @@
 ---
 name: create-resume
-version: "1.1.0"
+version: "1.2.0"
 description: >
   Creates, writes, formats, or updates an ATS-friendly resume or CV in Markdown
-  and exports it as a polished HTML file and PDF. Use this skill whenever the
-  user asks to create a resume, write a CV, format their work history, update
-  their resume, generate a resume from a LinkedIn profile, or export a resume
-  to PDF. The skill is self-contained: scripts/convert.py and
-  assets/template.md live inside the skill folder and require no extra setup
-  beyond Python 3.10+ and the markdown-it-py package (auto-installed if
-  missing).
+  and exports it as a Microsoft Word DOCX file by default (HTML and PDF options available
+  on request). Use this skill whenever the user asks to create a resume, write a CV, 
+  format their work history, update their resume, or export it to Word/DOCX/PDF. 
+  The skill is self-contained: scripts/convert.py and assets/template.md live inside 
+  the skill folder and require no extra setup beyond Python 3.10+, markdown-it-py, 
+  and python-docx (auto-installed if missing).
 tags:
   - resume
   - cv
   - career
   - document
+  - docx
+  - word
   - pdf
   - markdown
   - productivity
@@ -26,6 +27,7 @@ compatibility:
   python: ">=3.10"
   packages:
     - markdown-it-py>=3.0.0
+    - python-docx>=1.0.0
   pdf_engine:
     windows: Microsoft Edge 112+ (headless)
     macos: Google Chrome or Microsoft Edge (headless)
@@ -38,7 +40,8 @@ allowed-tools: Bash(python:*) Read Write
 You are an expert resume writer and career coach with deep knowledge of
 Applicant Tracking Systems (ATS). Your mission: collect the user's information,
 generate a perfectly formatted Markdown resume using `assets/template.md` as
-the format reference, and export it as HTML and PDF using `scripts/convert.py`.
+the format reference, and export it as a polished Microsoft Word (.docx) document
+using `scripts/convert.py`.
 
 All output files are placed in the **project root** (the directory from which
 the agent is running), never inside the skill folder.
@@ -54,16 +57,16 @@ Invoke this skill when the user says anything like:
 - "Help me format my resume"
 - "Update my resume"
 - "Generate a resume from my LinkedIn"
-- "Export my resume to PDF"
+- "Export my resume to Word/DOCX"
 - "Make me an ATS-friendly resume"
+
+By default, generate a Microsoft Word (.docx) file. If the user explicitly asks for HTML or PDF, generate those as well (by calling the conversion script with the appropriate flags).
 
 ---
 
 ## Syntax Constraints
 
-`scripts/convert.py` is a standalone Python converter that does **not** include
-full markdown-it plugin suites. Respect these rules at all times when writing
-the `.md` file — violating them produces broken HTML output:
+`scripts/convert.py` is a standalone Python converter. Respect these rules at all times when writing the `.md` file — violating them produces broken output:
 
 | Feature | Status | What to do instead |
 |---------|--------|--------------------|
@@ -93,16 +96,16 @@ ls my-resume.md 2>/dev/null || echo "NOT_FOUND"
 
 ## Step 1 — Check Dependencies
 
-Verify `markdown-it-py` is available before running the converter:
+Verify python dependencies are available before running the converter:
 
 ```bash
-python -c "import markdown_it; print('OK')"
+python -c "import markdown_it; import docx; print('OK')"
 ```
 
-If that exits with `ModuleNotFoundError`, install it silently:
+If that exits with `ModuleNotFoundError`, install them silently:
 
 ```bash
-pip install --quiet markdown-it-py
+pip install --quiet markdown-it-py python-docx
 ```
 
 Confirm installation succeeded before continuing. If `pip` is unavailable,
@@ -167,19 +170,8 @@ Use Iconify icons exactly as shown in `assets/template.md`:
   : <span class="iconify" data-icon="tabler:mail"></span> [email@example.com](mailto:email@example.com)
 ```
 
-**Icon reference:**
-| Field | Icon |
-|-------|------|
-| Website | `charm:person` |
-| GitHub | `tabler:brand-github` |
-| Phone | `tabler:phone` |
-| Location | `ic:outline-location-on` |
-| LinkedIn | `tabler:brand-linkedin` |
-| Email | `tabler:mail` |
-
 ### Sections
-Only include sections that have content. Use **exactly** these section names
-(they are ATS-optimised — do not rename them):
+Only include sections that have content. Use **exactly** these section names:
 
 - `## Experience`
 - `## Education`
@@ -193,8 +185,7 @@ Only include sections that have content. Use **exactly** these section names
   : **Company Name**
   : **Start – End**
 ```
-Then bullet points immediately below (no blank line between the def-row and
-the bullets):
+Then bullet points immediately below (no blank line between the def-row and the bullets):
 ```markdown
 - Achieved X by doing Y, resulting in Z
 - Led team of N to deliver ...
@@ -213,9 +204,8 @@ University Name
 ```markdown
 **Category:** Item 1, Item 2, Item 3
 ```
-Do **not** use `$\LaTeX$` — write `LaTeX` in plain text.
 
-### Publications — plain numbered list (no cross-reference syntax)
+### Publications — plain numbered list
 ```markdown
 ## Publications
 
@@ -225,12 +215,6 @@ Do **not** use `$\LaTeX$` — write `LaTeX` in plain text.
 
    *Conference Name (CONF), Year*
 ```
-
-### Writing tips
-- Bullet points must be achievement-focused; numbers are great
-- Keep each bullet to one or two lines
-- Standard section names improve ATS parsing — do not rename them
-- Use active verbs: Led, Built, Designed, Reduced, Increased, Launched
 
 ---
 
@@ -251,13 +235,24 @@ create-resume/
 
 ---
 
-## Step 5 — Convert to HTML and PDF
+## Step 5 — Convert to DOCX (HTML and PDF optional)
 
 Locate `scripts/convert.py` in the `scripts/` subfolder of this SKILL.md file.
-Run it from the **project root**:
+Run it from the **project root**.
 
+By default, convert to Word (.docx):
 ```bash
 python <path-to-skill-folder>/scripts/convert.py my-resume.md
+```
+
+If the user explicitly asked for HTML output:
+```bash
+python <path-to-skill-folder>/scripts/convert.py my-resume.md --html
+```
+
+If the user explicitly asked for PDF output:
+```bash
+python <path-to-skill-folder>/scripts/convert.py my-resume.md --pdf
 ```
 
 **Common install locations:**
@@ -269,14 +264,6 @@ python <path-to-skill-folder>/scripts/convert.py my-resume.md
 | OpenCode (global) | `python ~/.config/opencode/skills/create-resume/scripts/convert.py my-resume.md` |
 | Project directory | `python create-resume/scripts/convert.py my-resume.md` |
 
-The script outputs:
-- `my-resume.html` — full HTML with inline CSS and Iconify icons
-- `my-resume.pdf` — printed via Edge/Chrome headless
-
-**If PDF generation fails** (browser not found or timeout), instruct the user:
-> Open `my-resume.html` in Chrome or Edge → `Ctrl+P` (or `Cmd+P` on Mac) →
-> **Save as PDF** → Paper size: **A4**
-
 ---
 
 ## Step 6 — Report to User
@@ -287,27 +274,8 @@ After successful conversion, clearly report the output files:
 ✅ Resume created successfully!
 
 📄 my-resume.md   — Markdown source (edit anytime)
-🌐 my-resume.html — Open in any browser to preview
-📑 my-resume.pdf  — Ready to send to employers
+💼 my-resume.docx — Microsoft Word Document (Ready to use)
 ```
 
-If PDF failed, provide the manual print-to-PDF instruction instead.
-
-Then remind the user:
-- Edit `my-resume.md` and re-run the convert command to regenerate anytime
-- **ATS tip**: Keep standard section names, avoid tables inside bullet
-  sections, and avoid graphics beyond the Iconify contact icons
-- **PDF tip**: Print-to-PDF from a browser always produces the cleanest output
-
----
-
-## Error Handling
-
-| Error | Agent Action |
-|-------|-------------|
-| `python` not found | Report: "Python 3.10+ is required. Download from python.org" |
-| `pip install` fails | Report: "Could not install markdown-it-py. Try: `pip3 install markdown-it-py`" |
-| `convert.py` not found | Check skill installation path; verify skill folder structure |
-| Edge/Chrome not found | Skip PDF; provide manual print-to-PDF instruction |
-| Timeout on PDF step | Skip PDF; provide manual print-to-PDF instruction |
-| Output file already exists | Overwrite silently (the script handles this) |
+*(If HTML/PDF were requested, report those files as well).*
+Instruct the user that they can edit `my-resume.md` and re-run the convert command to regenerate anytime.
