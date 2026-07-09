@@ -1,0 +1,33 @@
+{
+  "name": "create-resume",
+  "version": "1.2.0",
+  "description": "Creates ATS-friendly resumes in Markdown and exports them as Word DOCX files by default, with HTML and PDF options available on request.",
+  "author": "shabeeth2",
+  "license": "MIT",
+  "homepage": "https://github.com/shabeeth2/create-resume-skill",
+  "repository": "shabeeth2/create-resume-skill",
+  "tags": [
+    "resume",
+    "cv",
+    "career",
+    "document",
+    "docx",
+    "word",
+    "pdf",
+    "markdown",
+    "productivity"
+  ],
+  "entrypoint": "SKILL.md",
+  "compatibility": {
+    "python": ">=3.10",
+    "packages": [
+      "markdown-it-py>=3.0.0",
+      "python-docx>=1.0.0"
+    ]
+  },
+  "allowed-tools": [
+    "Bash(python:*)",
+    "Read",
+    "Write"
+  ]
+}

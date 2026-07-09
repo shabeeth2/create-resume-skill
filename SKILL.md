@@ -9,6 +9,8 @@ description: >
   The skill is self-contained: scripts/convert.py and assets/template.md live inside 
   the skill folder and require no extra setup beyond Python 3.10+, markdown-it-py, 
   and python-docx (auto-installed if missing).
+author: shabeeth2
+license: MIT
 tags:
   - resume
   - cv
@@ -19,20 +21,10 @@ tags:
   - pdf
   - markdown
   - productivity
-author: shabeeth2
-homepage: https://github.com/shabeeth2/create-resume
-license: MIT
-icon: 📄
-compatibility:
-  python: ">=3.10"
-  packages:
-    - markdown-it-py>=3.0.0
-    - python-docx>=1.0.0
-  pdf_engine:
-    windows: Microsoft Edge 112+ (headless)
-    macos: Google Chrome or Microsoft Edge (headless)
-    linux: Google Chrome (headless)
-allowed-tools: Bash(python:*) Read Write
+allowed-tools:
+  - Bash(python:*)
+  - Read
+  - Write
 ---
 
 # Resume Creator
