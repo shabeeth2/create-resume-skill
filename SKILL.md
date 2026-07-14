@@ -54,13 +54,6 @@ Invoke this skill when the user says anything like:
 
 By default, generate a Microsoft Word (.docx) file. If the user explicitly asks for HTML or PDF, generate those as well (by calling the conversion script with the appropriate flags).
 
-### Template Selection
-
-| User Request | Template | Format | Font |
-|--------------|----------|--------|------|
-| Default | `assets/template.md` | Markdown deflists | Times New Roman |
-| "Use alternative template" / "alt template" | `assets/alternative-template.md` | HTML div-based | Times New Roman |
-
 ---
 
 ## Syntax Constraints
