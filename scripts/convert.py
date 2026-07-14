@@ -41,7 +41,7 @@ body {
   padding: 0;
   background: white;
   color: black;
-  font-family: Verdana, Arial, sans-serif;
+  font-family: 'Times New Roman', Georgia, serif;
   font-size: 12px;
   line-height: 1.3;
   text-align: left;
@@ -125,14 +125,28 @@ img {
 
 # ─── Markdown pre-processor ───────────────────────────────────────────────────
 
-def strip_frontmatter(text: str) -> str:
-    """Remove YAML frontmatter (--- ... ---)."""
+def parse_frontmatter(text: str) -> tuple[str, dict]:
+    """Parse and remove YAML frontmatter, returning (body, metadata)."""
     text = text.strip()
+    metadata = {}
     if text.startswith("---"):
         end = text.find("---", 3)
         if end != -1:
-            return text[end + 3:].lstrip("\n")
-    return text
+            fm_text = text[3:end].strip()
+            body = text[end + 3:].lstrip("\n")
+            for line in fm_text.split("\n"):
+                line = line.strip()
+                if ":" in line:
+                    key, val = line.split(":", 1)
+                    metadata[key.strip()] = val.strip().strip('"').strip("'")
+            return body, metadata
+    return text, metadata
+
+
+def strip_frontmatter(text: str) -> str:
+    """Remove YAML frontmatter (--- ... ---)."""
+    body, _ = parse_frontmatter(text)
+    return body
 
 
 def md_inline(text: str) -> str:
@@ -286,7 +300,7 @@ def clean_md_inline_tags(text: str) -> str:
     return text
 
 
-def md_to_docx(md_text: str, docx_path: Path) -> None:
+def md_to_docx(md_text: str, docx_path: Path, font_name: str = 'Times New Roman') -> None:
     """Parse Markdown resume to produce a beautifully styled Word Document."""
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
@@ -310,7 +324,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
     # Base style setup
     style_normal = doc.styles['Normal']
     font = style_normal.font
-    font.name = 'Verdana'
+    font.name = font_name
     font.size = Pt(8.5)
     font.color.rgb = RGBColor(0, 0, 0)
 
@@ -333,7 +347,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(4)
             run = p.add_run(name)
-            run.font.name = 'Verdana'
+            run.font.name = font_name
             run.font.size = Pt(18)
             run.bold = True
             
@@ -354,7 +368,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
             p.paragraph_format.space_after = Pt(2)
             p.paragraph_format.keep_with_next = True
             run = p.add_run(section_title)
-            run.font.name = 'Verdana'
+            run.font.name = font_name
             run.font.size = Pt(10.5)
             run.bold = True
             
@@ -374,7 +388,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
             p.paragraph_format.space_after = Pt(1)
             p.paragraph_format.keep_with_next = True
             run = p.add_run(title)
-            run.font.name = 'Verdana'
+            run.font.name = font_name
             run.font.size = Pt(9.0)
             run.bold = True
             i += 1
@@ -411,7 +425,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
                 
                 # Combine elements with '  |  '
                 run = p.add_run("  |  ".join(col_contents))
-                run.font.name = 'Verdana'
+                run.font.name = font_name
                 run.font.size = Pt(8.5)
             else:
                 # Build three-column table for alignment (removing borders)
@@ -448,7 +462,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
                         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     
                     run = p.add_run(content)
-                    run.font.name = 'Verdana'
+                    run.font.name = font_name
                     run.font.size = Pt(8.5)
                     # Bold job titles / terms
                     if idx == 0:
@@ -470,7 +484,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
                     run.bold = True
                 else:
                     run = p.add_run(clean_md_inline_tags(part))
-                run.font.name = 'Verdana'
+                run.font.name = font_name
                 run.font.size = Pt(8.5)
             i += 1
             continue
@@ -485,11 +499,11 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
             
             run_num = p.add_run(num_prefix + " ")
             run_num.bold = True
-            run_num.font.name = 'Verdana'
+            run_num.font.name = font_name
             run_num.font.size = Pt(8.5)
             
             run_text = p.add_run(clean_md_inline_tags(content))
-            run_text.font.name = 'Verdana'
+            run_text.font.name = font_name
             run_text.font.size = Pt(8.5)
             i += 1
             continue
@@ -506,7 +520,7 @@ def md_to_docx(md_text: str, docx_path: Path) -> None:
                 run.bold = True
             else:
                 run = p.add_run(clean_md_inline_tags(part))
-            run.font.name = 'Verdana'
+            run.font.name = font_name
             run.font.size = Pt(8.5)
         
         # Center align contact lines if they slip through as plain paragraphs
@@ -536,7 +550,9 @@ def convert(md_file: str, docx_only: bool = True, html: bool = False, pdf: bool 
     if docx_only or html or pdf:
         print("[1] Converting Markdown to DOCX ...")
         md_text = md_path.read_text(encoding="utf-8")
-        md_to_docx(md_text, docx_path)
+        _, metadata = parse_frontmatter(md_text)
+        font_name = metadata.get('font', 'Times New Roman')
+        md_to_docx(md_text, docx_path, font_name=font_name)
         print(f"    [OK] DOCX saved -> {docx_path}")
 
     # Generate HTML if requested
