@@ -16,16 +16,17 @@
   : **Tata Consultancy Services**
   : **Sep 2024 – Present**
 
-- Engineered an Agentic RAG system for health insurance using LangChain, vector databases, and LLM-powered agents with tool use and function calling for autonomous data retrieval and reasoning.
+- Engineered an Agentic RAG system for health insurance using LangChain, vector databases, and LLM-powered agents with tool use, function calling, and guardrails for autonomous data retrieval and reasoning.
 - Architected an AI-powered ITSM solution with NLP ticket triage, semantic search recommendation using vector embeddings, and data quality engine, improving operational efficiency by 40%.
 - Delivered Top 5/400+ at TCS AI Hackathon, building an LLM compliance tracker with automated SQL rule generation, RAG-based document retrieval, and human-in-the-loop approval workflow.
+- Configured prompts, instructions, and reasoning strategies for AI agent development, defining tools and guardrails to ensure reliable and production-grade agent behavior.
 - Containerized AI services using Docker and deployed to cloud infrastructure with auto-scaling configurations for production-grade availability.
 
 **AI Intern**
   : **Resilience Business Grids**
   : **Feb 2024 – Apr 2024**
 
-- Built document extraction pipeline combining Tesseract OCR and LLaVA, improving field-level extraction accuracy from 75% to 90%+ across 50+ document layouts using prompt engineering and model fine-tuning.
+- Built document extraction pipeline combining Tesseract OCR and LLaVA, improving field-level extraction accuracy from 75% to 90%+ across 50+ document layouts using prompt engineering, tokenization, and model fine-tuning.
 - Developed Python validation layer using regex and rule-based checks to catch extraction errors before downstream processing, reducing manual review cycles by 70%.
 - Containerized extraction service using Docker and deployed to AWS SageMaker with auto-scaling for high availability and cost-efficient inference.
 
@@ -54,7 +55,7 @@
 
 **Languages:** Python, SQL, Bash
 
-**AI/GenAI:** LangChain, LangGraph, RAG, LLMs, OpenAI API, Gemini API, Agentic AI, Prompt Engineering, Vector Search, ChromaDB, Human-in-the-Loop
+**AI/GenAI:** LangChain, LangGraph, RAG, LLMs, OpenAI API, Gemini API, Agentic AI, Prompt Engineering, Tokenization, Vector Search, ChromaDB, Guardrails, Human-in-the-Loop
 
 **Backend:** FastAPI, REST APIs, Microservices, Event-Driven Architecture
 
